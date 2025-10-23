@@ -1,0 +1,5 @@
+{
+  "name": "Data Structure Visualizer",
+  "description": "An interactive web application to visualize common computer science data structures. Explore concepts like Stacks, Queues, Linked Lists, and Binary Search Trees with real-time animations and AI-powered explanations.",
+  "requestFramePermissions": []
+}
