@@ -32,3 +32,32 @@ export interface BstNode {
   left: BstNode | null;
   right: BstNode | null;
 }
+
+export interface TreeNode {
+  id: number;
+  value: number;
+  children: TreeNode[];
+}
+
+export interface AvlNode {
+  value: number;
+  id: number;
+  left: AvlNode | null;
+  right: AvlNode | null;
+  height: number;
+}
+
+export interface TrieNode {
+  children: { [key: string]: TrieNode };
+  isEndOfWord: boolean;
+  id: string; 
+}
+
+export type ComplexityClass = 
+  | 'O(1)' 
+  | 'O(log n)' 
+  | 'O(n)' 
+  | 'O(n log n)' 
+  | 'O(n^2)' 
+  | 'O(2^n)' 
+  | 'O(n!)';
