@@ -3,23 +3,33 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import DataStructureLayout from './DataStructureLayout';
 import { PlayIcon } from '../icons/PlayIcon';
+import { useHistoryState } from '../../hooks/useHistoryState';
+import { UndoIcon } from '../icons/UndoIcon';
+import { RedoIcon } from '../icons/RedoIcon';
 
 interface Node {
   id: string;
-  x: number;
-  y: number;
 }
 interface Edge {
   source: string;
   target: string;
 }
+interface GraphState {
+  nodes: Node[];
+  edges: Edge[];
+  adj: Record<string, string[]>;
+}
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const GraphVisualizer: React.FC = () => {
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [adj, setAdj] = useState<Map<string, string[]>>(new Map());
+  const { state: graphState, set: setGraphState, undo, redo, canUndo, canRedo } = useHistoryState<GraphState>({
+    nodes: [],
+    edges: [],
+    adj: {},
+  });
+
+  const { nodes, edges, adj } = graphState;
   
   const [nodeInput, setNodeInput] = useState('');
   const [edgeSource, setEdgeSource] = useState('');
@@ -49,22 +59,21 @@ const GraphVisualizer: React.FC = () => {
 
   const handleAddNode = () => {
     if (nodeInput && !nodes.find(n => n.id === nodeInput)) {
-      setNodes([...nodes, { id: nodeInput, x: 0, y: 0 }]);
-      setAdj(prev => new Map(prev).set(nodeInput, []));
+      setGraphState({
+        ...graphState,
+        nodes: [...nodes, { id: nodeInput }],
+        adj: { ...adj, [nodeInput]: [] },
+      });
       setNodeInput('');
     }
   };
 
   const handleAddEdge = () => {
-    if (edgeSource && edgeTarget && adj.has(edgeSource) && adj.has(edgeTarget)) {
-      setEdges([...edges, { source: edgeSource, target: edgeTarget }]);
-      setAdj(prev => {
-        // FIX: The original code was mutating state, which is incorrect in React and can lead to type errors.
-        // This ensures immutability by creating a new array for the adjacency list.
-        const newAdj = new Map(prev);
-        const sourceNeighbors = newAdj.get(edgeSource) || [];
-        newAdj.set(edgeSource, [...sourceNeighbors, edgeTarget]);
-        return newAdj;
+    if (edgeSource && edgeTarget && adj[edgeSource] && adj[edgeTarget]) {
+      setGraphState({
+        ...graphState,
+        edges: [...edges, { source: edgeSource, target: edgeTarget }],
+        adj: { ...adj, [edgeSource]: [...adj[edgeSource], edgeTarget] },
       });
       setEdgeSource('');
       setEdgeTarget('');
@@ -72,7 +81,7 @@ const GraphVisualizer: React.FC = () => {
   };
   
   const runBFS = useCallback(async () => {
-    if (!adj.has(bfsStartNode)) return;
+    if (!adj[bfsStartNode]) return;
     
     setIsAnimating(true);
     setVisitedNodes(new Set());
@@ -88,7 +97,7 @@ const GraphVisualizer: React.FC = () => {
       const u = q.shift() as string;
       setQueueNodes([...q]);
       
-      const neighbors = adj.get(u) || [];
+      const neighbors = adj[u] || [];
       for (const v of neighbors) {
         if (!visited.has(v)) {
           visited.add(v);
@@ -109,22 +118,30 @@ const GraphVisualizer: React.FC = () => {
 
   const controls = (
     <div className="space-y-4">
+      <div className="flex justify-end gap-2">
+        <Button onClick={undo} disabled={!canUndo || isAnimating} variant="icon" aria-label="Undo">
+          <UndoIcon className="w-5 h-5" />
+        </Button>
+        <Button onClick={redo} disabled={!canRedo || isAnimating} variant="icon" aria-label="Redo">
+          <RedoIcon className="w-5 h-5" />
+        </Button>
+      </div>
       <div className="p-2 border border-gray-700 rounded-md">
         <div className="flex gap-2">
-          <Input value={nodeInput} onChange={e => setNodeInput(e.target.value)} placeholder="Node ID" className="flex-1 min-w-0"/>
-          <Button onClick={handleAddNode}>Add Node</Button>
+          <Input value={nodeInput} onChange={e => setNodeInput(e.target.value)} placeholder="Node ID" className="flex-1 min-w-0" disabled={isAnimating}/>
+          <Button onClick={handleAddNode} disabled={isAnimating}>Add Node</Button>
         </div>
       </div>
       <div className="p-2 border border-gray-700 rounded-md space-y-2">
         <div className="flex gap-2">
-           <select value={edgeSource} onChange={e => setEdgeSource(e.target.value)} className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white flex-1 min-w-0"> <option value="">Source</option>{nodeOptions}</select>
-           <select value={edgeTarget} onChange={e => setEdgeTarget(e.target.value)} className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white flex-1 min-w-0"> <option value="">Target</option>{nodeOptions}</select>
+           <select value={edgeSource} onChange={e => setEdgeSource(e.target.value)} disabled={isAnimating} className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white flex-1 min-w-0"> <option value="">Source</option>{nodeOptions}</select>
+           <select value={edgeTarget} onChange={e => setEdgeTarget(e.target.value)} disabled={isAnimating} className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white flex-1 min-w-0"> <option value="">Target</option>{nodeOptions}</select>
         </div>
-        <Button onClick={handleAddEdge} className="w-full">Add Edge</Button>
+        <Button onClick={handleAddEdge} disabled={isAnimating} className="w-full">Add Edge</Button>
       </div>
        <div className="p-2 border border-gray-700 rounded-md">
         <div className="flex gap-2">
-          <select value={bfsStartNode} onChange={e => setBfsStartNode(e.target.value)} className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white flex-1 min-w-0"><option value="">Start Node</option>{nodeOptions}</select>
+          <select value={bfsStartNode} onChange={e => setBfsStartNode(e.target.value)} className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white flex-1 min-w-0" disabled={isAnimating}><option value="">Start Node</option>{nodeOptions}</select>
           <Button onClick={runBFS} disabled={isAnimating} variant="secondary"><PlayIcon className="w-5 h-5"/></Button>
         </div>
       </div>

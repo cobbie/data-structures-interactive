@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import DataStructureLayout from './DataStructureLayout';
+import { useHistoryState } from '../../hooks/useHistoryState';
+import { UndoIcon } from '../icons/UndoIcon';
+import { RedoIcon } from '../icons/RedoIcon';
 
 interface Node {
   id: number;
@@ -11,7 +14,7 @@ interface Node {
 let nextId = 4;
 
 const LinkedListVisualizer: React.FC = () => {
-  const [list, setList] = useState<Node[]>([
+  const { state: list, set: setList, undo, redo, canUndo, canRedo } = useHistoryState<Node[]>([
     { id: 1, value: 10 },
     { id: 2, value: 99 },
     { id: 3, value: 37 },
@@ -33,6 +36,14 @@ const LinkedListVisualizer: React.FC = () => {
   
   const controls = (
     <div className="space-y-4">
+       <div className="flex justify-end gap-2">
+        <Button onClick={undo} disabled={!canUndo} variant="icon" aria-label="Undo">
+          <UndoIcon className="w-5 h-5" />
+        </Button>
+        <Button onClick={redo} disabled={!canRedo} variant="icon" aria-label="Redo">
+          <RedoIcon className="w-5 h-5" />
+        </Button>
+      </div>
       <div className="flex gap-2">
         <Input
           type="number"

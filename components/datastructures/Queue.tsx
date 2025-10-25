@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import DataStructureLayout from './DataStructureLayout';
+import { useHistoryState } from '../../hooks/useHistoryState';
+import { UndoIcon } from '../icons/UndoIcon';
+import { RedoIcon } from '../icons/RedoIcon';
 
 const QueueVisualizer: React.FC = () => {
-  const [queue, setQueue] = useState<number[]>([10, 20, 30]);
+  const { state: queue, set: setQueue, undo, redo, canUndo, canRedo } = useHistoryState<number[]>([10, 20, 30]);
   const [inputValue, setInputValue] = useState('');
   const [peekedValue, setPeekedValue] = useState<number | null>(null);
   const [dequeuedValue, setDequeuedValue] = useState<number | null>(null);
@@ -34,10 +37,19 @@ const QueueVisualizer: React.FC = () => {
     } else {
       setPeekedValue(null);
     }
+    setDequeuedValue(null);
   };
 
   const controls = (
     <div className="space-y-4">
+      <div className="flex justify-end gap-2">
+        <Button onClick={undo} disabled={!canUndo} variant="icon" aria-label="Undo">
+          <UndoIcon className="w-5 h-5" />
+        </Button>
+        <Button onClick={redo} disabled={!canRedo} variant="icon" aria-label="Redo">
+          <RedoIcon className="w-5 h-5" />
+        </Button>
+      </div>
       <div className="flex gap-2">
         <Input
           type="number"

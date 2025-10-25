@@ -1,8 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import DataStructureLayout from './DataStructureLayout';
 import { TrashIcon } from '../icons/TrashIcon';
+import { useHistoryState } from '../../hooks/useHistoryState';
+import { UndoIcon } from '../icons/UndoIcon';
+import { RedoIcon } from '../icons/RedoIcon';
 
 interface Entry {
   key: string;
@@ -20,7 +23,8 @@ const hash = (key: string, tableSize: number) => {
 };
 
 const HashTableVisualizer: React.FC = () => {
-  const [buckets, setBuckets] = useState<Entry[][]>(() => Array(TABLE_SIZE).fill(null).map(() => []));
+  // FIX: Explicitly type the empty array in the map to ensure the correct type `Entry[][]` is inferred.
+  const { state: buckets, set: setBuckets, undo, redo, canUndo, canRedo } = useHistoryState<Entry[][]>(() => Array(TABLE_SIZE).fill(null).map((): Entry[] => []));
   const [keyInput, setKeyInput] = useState('');
   const [valueInput, setValueInput] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -42,17 +46,15 @@ const HashTableVisualizer: React.FC = () => {
     if (!keyInput) return;
     const index = hash(keyInput, TABLE_SIZE);
     animate(index);
-    setBuckets(prevBuckets => {
-      const newBuckets = prevBuckets.map(b => [...b]);
-      const chain = newBuckets[index];
-      const existingEntryIndex = chain.findIndex(e => e.key === keyInput);
-      if (existingEntryIndex > -1) {
-        chain[existingEntryIndex] = { key: keyInput, value: valueInput };
-      } else {
-        chain.push({ key: keyInput, value: valueInput });
-      }
-      return newBuckets;
-    });
+    const newBuckets = buckets.map(b => [...b]);
+    const chain = newBuckets[index];
+    const existingEntryIndex = chain.findIndex(e => e.key === keyInput);
+    if (existingEntryIndex > -1) {
+      chain[existingEntryIndex] = { key: keyInput, value: valueInput };
+    } else {
+      chain.push({ key: keyInput, value: valueInput });
+    }
+    setBuckets(newBuckets);
     setKeyInput('');
     setValueInput('');
   };
@@ -60,11 +62,9 @@ const HashTableVisualizer: React.FC = () => {
   const handleRemove = (keyToRemove: string) => {
     const index = hash(keyToRemove, TABLE_SIZE);
     animate(index);
-    setBuckets(prevBuckets => {
-      const newBuckets = prevBuckets.map(b => [...b]);
-      newBuckets[index] = newBuckets[index].filter(e => e.key !== keyToRemove);
-      return newBuckets;
-    });
+    const newBuckets = buckets.map(b => [...b]);
+    newBuckets[index] = newBuckets[index].filter(e => e.key !== keyToRemove);
+    setBuckets(newBuckets);
   };
   
   const handleSearch = () => {
@@ -77,6 +77,14 @@ const HashTableVisualizer: React.FC = () => {
 
   const controls = (
     <div className="space-y-4">
+      <div className="flex justify-end gap-2">
+        <Button onClick={undo} disabled={!canUndo || isAnimating} variant="icon" aria-label="Undo">
+          <UndoIcon className="w-5 h-5" />
+        </Button>
+        <Button onClick={redo} disabled={!canRedo || isAnimating} variant="icon" aria-label="Redo">
+          <RedoIcon className="w-5 h-5" />
+        </Button>
+      </div>
       <div>
         <label className="text-sm text-gray-400">Key</label>
         <Input

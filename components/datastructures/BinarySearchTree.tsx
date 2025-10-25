@@ -3,6 +3,9 @@ import { BstNode } from '../../types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import DataStructureLayout from './DataStructureLayout';
+import { useHistoryState } from '../../hooks/useHistoryState';
+import { UndoIcon } from '../icons/UndoIcon';
+import { RedoIcon } from '../icons/RedoIcon';
 
 let nodeIdCounter = 100;
 
@@ -47,7 +50,7 @@ const NodeComponent: React.FC<{ node: BstNode | null, searchingId: number | null
 };
 
 const BinarySearchTreeVisualizer: React.FC = () => {
-  const [root, setRoot] = useState<BstNode | null>(() => {
+  const { state: root, set: setRoot, undo, redo, canUndo, canRedo } = useHistoryState<BstNode | null>(() => {
     // Initial tree
     const r = createNode(50);
     r.left = createNode(30);
@@ -64,7 +67,7 @@ const BinarySearchTreeVisualizer: React.FC = () => {
   const [searchingId, setSearchingId] = useState<number | null>(null);
   const [foundId, setFoundId] = useState<number | null>(null);
 
-  const insert = useCallback((value: number) => {
+  const insert = useCallback((currentRoot: BstNode | null, value: number) => {
     const insertNode = (node: BstNode | null): BstNode => {
       if (node === null) {
         return createNode(value);
@@ -76,14 +79,14 @@ const BinarySearchTreeVisualizer: React.FC = () => {
       }
       return node;
     };
-    setRoot(prevRoot => insertNode(JSON.parse(JSON.stringify(prevRoot || null))));
+    return insertNode(JSON.parse(JSON.stringify(currentRoot || null)));
   }, []);
 
   const handleInsert = () => {
     const value = parseInt(inputValue, 10);
     if (!isNaN(value)) {
       setIsAnimating(true);
-      insert(value);
+      setRoot(insert(root, value));
       setInputValue('');
       setTimeout(() => setIsAnimating(false), 500);
     }
@@ -115,9 +118,16 @@ const BinarySearchTreeVisualizer: React.FC = () => {
     setIsAnimating(false);
   };
 
-
   const controls = (
     <div className="space-y-4">
+      <div className="flex justify-end gap-2">
+        <Button onClick={undo} disabled={!canUndo || isAnimating} variant="icon" aria-label="Undo">
+          <UndoIcon className="w-5 h-5" />
+        </Button>
+        <Button onClick={redo} disabled={!canRedo || isAnimating} variant="icon" aria-label="Redo">
+          <RedoIcon className="w-5 h-5" />
+        </Button>
+      </div>
       <div className="flex gap-2">
         <Input
           type="number"

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Data Structure Visualizer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script type="importmap">
 {
   "imports": {
@@ -18,8 +20,43 @@
   }
 }
 </script>
+<style>
+  .ds-theory h4 {
+    color: #22d3ee; /* cyan-400 */
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+  .ds-theory table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+    margin-bottom: 1em;
+  }
+  .ds-theory th, .ds-theory td {
+    border: 1px solid #4b5563; /* gray-600 */
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+  .ds-theory th {
+    background-color: #374151; /* gray-700 */
+    font-weight: 600;
+  }
+  .ds-theory ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+  }
+  .ds-theory li {
+    margin-bottom: 0.25rem;
+  }
+  .ds-theory p {
+    line-height: 1.6;
+  }
+</style>
 </head>
-  <body class="bg-gray-900 text-gray-100">
+  <body class="bg-[#0D1117] text-gray-100 font-['Inter',_sans-serif]">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

@@ -1,4 +1,20 @@
-export type DataStructureId = 'stack' | 'queue' | 'linked_list' | 'binary_search_tree' | 'hash_table' | 'graph';
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+export type DataStructureId =
+  | 'array'
+  | 'stack'
+  | 'queue'
+  | 'linked_list'
+  | 'hash_table'
+  | 'tree'
+  | 'binary_tree'
+  | 'binary_search_tree'
+  | 'heap'
+  | 'graph'
+  | 'trie'
+  | 'self_balancing_bst'
+  | 'dsu'
+  | 'segment_tree';
 
 export interface DSInfo {
   description: string;
